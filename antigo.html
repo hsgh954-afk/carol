@@ -1,0 +1,1312 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Carol + Helder — A Caminho de Casa 🐾</title>
+  <meta name="theme-color" content="#12131a" />
+  <style>
+    :root{
+      --ink:#eaf0ff;
+      --muted:#b9c3e6;
+      --accent:#ffb3d9;
+      --accent2:#9cffd7;
+      --gold:#ffe58a;
+      --shadow: rgba(0,0,0,.35);
+      --stroke: rgba(255,255,255,.14);
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background: radial-gradient(1200px 700px at 30% 20%, #1a1f3d 0%, #0b0f18 45%, #070a12 100%);
+      color:var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      overflow:hidden;
+      touch-action:none;
+    }
+    #wrap{ position:relative; width:100%; height:100%; }
+    canvas{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      display:block;
+    }
+
+    .hud{
+      position:absolute; inset:0;
+      pointer-events:none;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 14px max(14px, env(safe-area-inset-left));
+      gap:12px;
+    }
+    .badge{
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+      border:1px solid var(--stroke);
+      border-radius:16px;
+      padding:10px 12px;
+      box-shadow: 0 12px 30px var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      max-width:min(560px, 96vw);
+    }
+    .title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:800;
+      letter-spacing:.2px;
+      line-height:1.1;
+      font-size:14px;
+    }
+    .title small{ font-weight:700; color:var(--muted); opacity:.95; }
+    .sub{
+      margin-top:6px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+    .kbd{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-top:8px;
+      font-size:11px;
+      color:rgba(234,240,255,.85);
+    }
+    .key{
+      padding:2px 8px;
+      border-radius:9px;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,.25);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress{
+      margin-left:auto;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:flex-end;
+      max-width:min(360px, 46vw);
+    }
+    .bar{
+      width:min(330px, 46vw);
+      height:12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      overflow:hidden;
+      box-shadow: 0 12px 30px var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .bar > i{
+      display:block;
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--gold));
+      border-radius:999px;
+      filter: saturate(1.1);
+      box-shadow: 0 0 18px rgba(255,179,217,.35);
+    }
+    .mini{
+      font-size:11px;
+      color:var(--muted);
+      text-align:right;
+      opacity:.95;
+    }
+
+    .dialog{
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      bottom: max(18px, env(safe-area-inset-bottom));
+      width:min(900px, 94vw);
+      pointer-events:none;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:stretch;
+    }
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:18px;
+      padding:14px 14px 12px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      overflow:hidden;
+      position:relative;
+    }
+    .panel:before{
+      content:"";
+      position:absolute;
+      inset:-40px;
+      background: radial-gradient(420px 140px at 30% 20%, rgba(255,179,217,.12), transparent 60%),
+                  radial-gradient(420px 140px at 70% 80%, rgba(156,255,215,.10), transparent 60%);
+      pointer-events:none;
+    }
+    .who{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      position:relative;
+    }
+    .tag{
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.3px;
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color:rgba(234,240,255,.92);
+    }
+    .tag.carol{ box-shadow: 0 0 0 1px rgba(255,179,217,.12) inset; }
+    .tag.helder{ box-shadow: 0 0 0 1px rgba(156,255,215,.12) inset; }
+    .hint{
+      margin-left:auto;
+      color:rgba(234,240,255,.72);
+      font-size:12px;
+    }
+    .text{
+      margin-top:10px;
+      font-size:14px;
+      line-height:1.45;
+      color:rgba(234,240,255,.92);
+      position:relative;
+      white-space:pre-wrap;
+    }
+
+    .letter{
+      position:absolute;
+      inset:0;
+      display:none;
+      place-items:center;
+      padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+      background: radial-gradient(1200px 800px at 50% 30%, rgba(255,179,217,.12), transparent 55%),
+                  radial-gradient(1200px 800px at 60% 60%, rgba(156,255,215,.10), transparent 60%),
+                  rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index:20;
+    }
+    .letter .sheet{
+      width:min(940px, 96vw);
+      max-height:min(84vh, 900px);
+      overflow:auto;
+      background: linear-gradient(180deg, rgba(20,22,38,.94), rgba(14,16,28,.94));
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:22px;
+      box-shadow: 0 30px 90px rgba(0,0,0,.60);
+      padding:18px 18px 16px;
+      position:relative;
+    }
+    .sheet h1{ margin:0 0 10px 0; font-size:18px; letter-spacing:.2px; }
+    .sheet p{
+      margin:0;
+      color:rgba(234,240,255,.92);
+      line-height:1.6;
+      font-size:14px;
+      white-space:pre-wrap;
+    }
+    .sheet .actions{
+      margin-top:14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .btn{
+      pointer-events:auto;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      color:rgba(234,240,255,.94);
+      padding:9px 12px;
+      border-radius:14px;
+      font-weight:850;
+      cursor:pointer;
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,.35), 0 14px 40px rgba(0,0,0,.35);
+      transition: transform .12s ease, background .12s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.10); }
+    .btn.primary{
+      background: linear-gradient(90deg, rgba(255,179,217,.18), rgba(156,255,215,.16));
+      border-color: rgba(255,255,255,.22);
+    }
+    .btn.danger{
+      background: rgba(255,107,139,.12);
+      border-color: rgba(255,107,139,.35);
+    }
+
+    .touch{
+      position:absolute;
+      left:0; right:0;
+      bottom:0;
+      padding: 10px max(12px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+      display:none;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:10px;
+      pointer-events:none;
+      z-index:10;
+    }
+    .pad{ display:flex; gap:10px; align-items:flex-end; }
+    .tbtn{
+      pointer-events:auto;
+      width:56px; height:56px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.08);
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,.35), 0 16px 40px rgba(0,0,0,.35);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color:rgba(234,240,255,.94);
+      font-weight:950;
+      font-size:18px;
+      display:grid;
+      place-items:center;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action:none;
+    }
+    .tbtn.big{ width:66px; height:66px; border-radius:22px; font-size:20px; }
+    .tbtn.heart{
+      width:66px; height:66px;
+      background: linear-gradient(180deg, rgba(255,179,217,.14), rgba(156,255,215,.10));
+    }
+    .tbtn:active{ transform: translateY(1px) scale(.99); }
+
+    @media (pointer:coarse){
+      .touch{ display:flex; }
+      .kbd{ display:none; }
+      .sub{ max-width: 58vw; }
+    }
+    @media (max-width:520px){
+      .hud{ flex-direction:column; align-items:stretch; }
+      .progress{ align-items:flex-start; max-width:100%; }
+      .mini{ text-align:left; }
+      .bar{ width:min(520px, 92vw); }
+    }
+  </style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+
+  <div class="hud">
+    <div class="badge">
+      <div class="title">🐾 Carol + Helder <small>— a caminho de casa</small></div>
+      <div class="sub">
+        Segue a Carol. Lê as placas (↓/💬). No fim, entra em casa com ela (E).
+      </div>
+      <div class="kbd">
+        <span class="key">← →</span> ou <span class="key">A D</span> andar
+        <span class="key">↑</span>/<span class="key">W</span>/<span class="key">Espaço</span> saltar
+        <span class="key">↓</span> ler placa
+        <span class="key">E</span> entrar
+        <span class="key">R</span> recomeçar
+      </div>
+    </div>
+
+    <div class="progress">
+      <div class="bar" aria-label="Progresso"><i id="barFill"></i></div>
+      <div class="mini" id="miniText">Placas: 0 / 7 • Corações: 0</div>
+    </div>
+  </div>
+
+  <div class="dialog" id="dialog" style="display:none">
+    <div class="panel">
+      <div class="who">
+        <span class="tag" id="speakerTag">Placa</span>
+        <span class="hint" id="hintText">↓ ler/fechar • ↑ fecha</span>
+      </div>
+      <div class="text" id="dialogText"></div>
+    </div>
+  </div>
+
+  <div class="letter" id="letter">
+    <div class="sheet">
+      <h1 id="letterTitle">🏡 Dentro de casa</h1>
+      <p id="letterText"></p>
+      <div class="actions">
+        <button class="btn" id="copyBtn">Copiar</button>
+        <button class="btn primary" id="againBtn">Jogar outra vez</button>
+        <button class="btn danger" id="closeBtn">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="touch" id="touch">
+    <div class="pad">
+      <div class="tbtn" data-k="left">←</div>
+      <div class="tbtn" data-k="right">→</div>
+      <div class="tbtn big" data-k="jump">↑</div>
+    </div>
+    <div class="pad">
+      <div class="tbtn heart" data-k="read">💬</div>
+      <div class="tbtn" data-k="enter">E</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d', { alpha: true });
+
+  const barFill = document.getElementById('barFill');
+  const miniText = document.getElementById('miniText');
+
+  const dialog = document.getElementById('dialog');
+  const dialogText = document.getElementById('dialogText');
+  const speakerTag = document.getElementById('speakerTag');
+  const hintText = document.getElementById('hintText');
+
+  const letter = document.getElementById('letter');
+  const letterTitle = document.getElementById('letterTitle');
+  const letterText = document.getElementById('letterText');
+  const copyBtn = document.getElementById('copyBtn');
+  const againBtn = document.getElementById('againBtn');
+  const closeBtn = document.getElementById('closeBtn');
+
+  const FULL_LETTER =
+`Carol,
+
+Tenho pensado no que aconteceu ontem.
+
+Não quero justificar-me nem tornar isto numa discussão. Quero só assumir, com calma, que eu devia ter respeitado melhor aquilo que estavas a sentir.
+
+Se te fiz sentir pressionada, pouco ouvida ou sozinha — naquele momento e noutros — eu lamento mesmo. Não era isso que eu queria para ti.
+
+Tu tens todo o direito de estar como estás. Não precisas de suavizar nada por minha causa. Eu não vou discutir o que sentes nem tentar convencer-te do contrário.
+
+Eu estou aqui. Não para me defender. Não para acelerar nada.
+Só para estar contigo de um modo mais tranquilo, mais atento e mais seguro.
+
+E quando eu penso em “seguro”, penso mesmo no básico: em estar ao teu lado, proteger o nosso cantinho, aquilo que sustenta a nossa casa — as pequenas coisas, os móveis, a rotina, o silêncio bom, o conforto. Quero cuidar disso contigo, sem pressa.
+
+Com carinho,
+Helder 🐾`;
+
+  const PLAQUES = [
+    { who:'Carol', text:'Ok, Helder 🐾\nVem comigo.\nLê as placas e não tenhas pressa.' },
+    { who:'Helder', text:'Carol… tenho pensado no que aconteceu ontem.' },
+    { who:'Helder', text:'Não quero justificar-me.\nSó quero dizer isto com calma:\neu devia ter respeitado melhor o que estavas a sentir.' },
+    { who:'Helder', text:'Se te fiz sentir pressionada, pouco ouvida ou sozinha…\neu lamento mesmo. A sério.' },
+    { who:'Helder', text:'Tu tens todo o direito de estar como estás.\nNão precisas de “suavizar” nada por mim.' },
+    { who:'Helder', text:'Eu não vou discutir o que sentes.\nNem tentar virar isso ao contrário.' },
+    { who:'Helder', text:'Eu estou aqui.\nSem defesa. Sem pressa.\nSó para estar contigo — com mais atenção e segurança.' },
+  ];
+
+  const WORLD = {
+    w: 4200, h: 720,
+    gravity: 0.46, maxFall: 12.8,
+    groundFriction: 0.82, airFriction: 0.92, maxSpeed: 3.5,
+    coyoteMs: 110, bufferMs: 120,
+    jumpVel: -8.2, jumpCut: 0.55
+  };
+
+  let DPR = Math.min(2, window.devicePixelRatio || 1);
+  let VW = 960, VH = 540;
+
+  function resize(){
+    const w = window.innerWidth, h = window.innerHeight;
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    const targetShort = Math.min(w, h);
+    const base = targetShort < 520 ? 360 : 480;
+    const aspect = w / h;
+
+    VH = Math.round(base);
+    VW = Math.round(base * aspect);
+
+    canvas.width  = Math.floor(VW * DPR);
+    canvas.height = Math.floor(VH * DPR);
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.imageSmoothingEnabled = false;
+  }
+  window.addEventListener('resize', resize, {passive:true});
+  resize();
+
+  const keys = new Set();
+  const pressed = new Set();
+  let pointerDown = false;
+
+  window.addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase();
+    keys.add(k);
+    pressed.add(k);
+    if (['arrowleft','arrowright','arrowup','arrowdown',' '].includes(e.key)) e.preventDefault();
+  }, {passive:false});
+
+  window.addEventListener('keyup', (e) => {
+    keys.delete(e.key.toLowerCase());
+  }, {passive:true});
+
+  const touchEl = document.getElementById('touch');
+  (function bindTouchButtons(){
+    const map = {
+      left:  ['arrowleft','a'],
+      right: ['arrowright','d'],
+      jump:  ['arrowup','w',' '],
+      read:  ['arrowdown','s','enter'],
+      enter: ['e']
+    };
+    touchEl.querySelectorAll('.tbtn').forEach(btn => {
+      const code = btn.getAttribute('data-k');
+      const down = () => {
+        pointerDown = true;
+        for(const k of map[code]) keys.add(k);
+        if (code === 'jump') pressed.add(' ');
+        if (code === 'read') pressed.add('arrowdown');
+        if (code === 'enter') pressed.add('e');
+      };
+      const up = () => {
+        pointerDown = false;
+        for(const k of map[code]) keys.delete(k);
+      };
+      btn.addEventListener('pointerdown', (e)=>{ e.preventDefault(); btn.setPointerCapture(e.pointerId); down(); }, {passive:false});
+      btn.addEventListener('pointerup',   (e)=>{ e.preventDefault(); up(); }, {passive:false});
+      btn.addEventListener('pointercancel', up, {passive:true});
+      btn.addEventListener('pointerleave', ()=>{ if(pointerDown) up(); }, {passive:true});
+    });
+  })();
+
+  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+  const lerp = (a,b,t)=>a+(b-a)*t;
+  const rand = (a,b)=>a+Math.random()*(b-a);
+
+  const cam = { x:0, y:0 };
+
+  const platforms = [
+    {x:0, y:520, w:900, h:220},
+    {x:900, y:520, w:650, h:220},
+    {x:1550, y:520, w:620, h:220},
+    {x:2170, y:520, w:520, h:220},
+    {x:2690, y:520, w:700, h:220},
+    {x:3390, y:520, w:810, h:220},
+    {x:520, y:430, w:180, h:30},
+    {x:770, y:380, w:160, h:30},
+    {x:1040, y:410, w:180, h:30},
+    {x:1460, y:410, w:180, h:30},
+    {x:1680, y:360, w:170, h:30},
+    {x:1920, y:400, w:170, h:30},
+    {x:2300, y:430, w:180, h:30},
+    {x:2520, y:380, w:160, h:30},
+    {x:2960, y:420, w:200, h:30},
+    {x:3220, y:370, w:200, h:30},
+    {x:3600, y:430, w:180, h:30},
+    {x:3820, y:380, w:180, h:30}
+  ];
+
+  const house = { x: WORLD.w - 360, y: 520, w: 240, h: 170 };
+
+  const plaques = [];
+  const plaqueSpacing = (WORLD.w-520) / (PLAQUES.length);
+  for(let i=0;i<PLAQUES.length;i++){
+    plaques.push({ id:i, x:260+i*plaqueSpacing+rand(-35,35), y:520, w:26, h:40, read:false, glow:0 });
+  }
+
+  const decor = [];
+  for(let i=0;i<48;i++){
+    const x = i*90 + rand(-20,20);
+    decor.push({ kind: Math.random()<0.6?'tree':'bush', x: clamp(x,10,WORLD.w-10), y:520, s: rand(0.8,1.55), seed: rand(0,999) });
+  }
+  for(let i=0;i<120;i++){
+    decor.push({ kind:'flower', x: rand(0, WORLD.w), y:520, s: rand(0.7,1.3), seed: rand(0,999) });
+  }
+
+  const particles = [];
+  for(let i=0;i<120;i++){
+    particles.push({
+      x: rand(0, WORLD.w),
+      y: rand(40, 320),
+      vx: rand(-0.25,0.25),
+      vy: rand(-0.08,0.08),
+      t: rand(0,999),
+      seed: rand(0,999),
+      kind: Math.random()<0.6?'firefly':(Math.random()<0.65?'petal':'spark')
+    });
+  }
+
+  let audioCtx = null;
+  let audioOn = false;
+  function beep(freq=660, dur=0.06, type='sine', gain=0.03){
+    if(!audioOn) return;
+    try{
+      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const t0 = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = type;
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(gain, t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(t0);
+      o.stop(t0 + dur + 0.02);
+    }catch(e){}
+  }
+  window.addEventListener('pointerdown', () => {
+    if(audioOn) return;
+    audioOn = true;
+    beep(440, 0.04, 'triangle', 0.02);
+  }, {once:true, passive:true});
+
+  let activePlaque = null;
+  let showDialog = false;
+  let overlayOpen = false;
+  let readCount = 0;
+
+  let scene = 'outside';
+  let insideStep = 0;
+
+  function openDialog(plaque){
+    const entry = PLAQUES[plaque.id];
+    activePlaque = plaque;
+    showDialog = true;
+    dialog.style.display = '';
+    speakerTag.textContent = entry.who === 'Carol' ? 'Carol 🐾' : 'Helder 🐾';
+    speakerTag.className = 'tag ' + (entry.who === 'Carol' ? 'carol' : 'helder');
+    hintText.textContent = '↓ fechar • ↑ fechar';
+    dialogText.textContent = entry.text;
+
+    if(!plaque.read){
+      plaque.read = true;
+      readCount++;
+      helder.hearts += 1;
+      helder.sparkle = 1;
+      carol.blush = 1;
+      beep(880,0.05,'triangle',0.02);
+      beep(1180,0.06,'sine',0.02);
+    }
+  }
+  function closeDialog(){
+    showDialog = false;
+    dialog.style.display = 'none';
+    activePlaque = null;
+  }
+
+  function openOverlay(title, text){
+    overlayOpen = true;
+    letter.style.display = 'grid';
+    letterTitle.textContent = title;
+    letterText.textContent = text;
+    beep(523,0.06,'triangle',0.02);
+    beep(784,0.07,'sine',0.02);
+  }
+  function closeOverlay(){
+    overlayOpen = false;
+    letter.style.display = 'none';
+  }
+
+  copyBtn.addEventListener('click', async () => {
+    try{
+      await navigator.clipboard.writeText(letterText.textContent || FULL_LETTER);
+      copyBtn.textContent = 'Copiado ✅';
+      setTimeout(()=>copyBtn.textContent='Copiar', 1200);
+      beep(990,0.05,'triangle',0.02);
+    }catch{
+      copyBtn.textContent = 'Não deu 😿';
+      setTimeout(()=>copyBtn.textContent='Copiar', 1400);
+    }
+  });
+
+  function restart(){
+    closeDialog();
+    closeOverlay();
+    scene = 'outside';
+    readCount = 0;
+    for(const p of plaques){ p.read=false; p.glow=0; }
+    carol.x = 180; carol.y = 460; carol.vx=0; carol.vy=0; carol.dir=1; carol.onGround=false; carol.blush=0;
+    helder.x = 130; helder.y = 460; helder.vx=0; helder.vy=0; helder.dir=1; helder.onGround=false; helder.sparkle=0; helder.hearts=0;
+    helder.coyote = 0;
+    helder.jumpBuf = 0;
+    cam.x = 0; cam.y = 0;
+    beep(392,0.06,'sine',0.02);
+  }
+  againBtn.addEventListener('click', restart);
+  closeBtn.addEventListener('click', closeOverlay);
+
+  function makeCat(name, colorA, colorB){
+    return {
+      name, x:110, y:460, w:26, h:18,
+      vx:0, vy:0, dir:1,
+      onGround:false, step:0,
+      blush:0, sparkle:0, hearts:0,
+      colorA, colorB,
+      coyote:0, jumpBuf:0, jumpHeld:false
+    };
+  }
+  const carol = makeCat('Carol', '#ffb3d9', '#ffd7ea');
+  const helder = makeCat('Helder', '#9cffd7', '#c9ffef');
+
+  const lead = { targetSpeed: 1.10, pause: 0 };
+
+  function aabb(ax,ay,aw,ah, bx,by,bw,bh){
+    return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
+  }
+
+  function resolveEntity(e){
+    e.onGround = false;
+
+    e.x += e.vx;
+    for(const p of platforms){
+      if(aabb(e.x, e.y, e.w, e.h, p.x, p.y, p.w, p.h)){
+        if(e.vx > 0) e.x = p.x - e.w;
+        if(e.vx < 0) e.x = p.x + p.w;
+        e.vx = 0;
+      }
+    }
+
+    e.y += e.vy;
+    for(const p of platforms){
+      if(aabb(e.x, e.y, e.w, e.h, p.x, p.y, p.w, p.h)){
+        if(e.vy > 0){
+          e.y = p.y - e.h;
+          e.vy = 0;
+          e.onGround = true;
+        }else if(e.vy < 0){
+          e.y = p.y + p.h;
+          e.vy = 0;
+        }
+      }
+    }
+
+    e.x = clamp(e.x, 0, WORLD.w - e.w);
+    if(e.y > WORLD.h + 300) restart();
+  }
+
+  function nearestPlaque(e, dist){
+    let best=null, bestD=Infinity;
+    for(const p of plaques){
+      const px = p.x + p.w/2;
+      const ex = e.x + e.w/2;
+      const d = Math.abs(px - ex);
+      const dy = Math.abs((p.y - 40) - e.y);
+      if(d < dist && dy < 80 && d < bestD){
+        bestD = d; best = p;
+      }
+    }
+    return best;
+  }
+
+  // ✅ DETEÇÃO MELHORADA: por proximidade (muito mais fácil entrar)
+  function houseDoorCenter(){
+    return { x: house.x + 127, y: house.y - 36 }; // centro aproximado da porta
+  }
+  function distanceToDoor(){
+    const d = houseDoorCenter();
+    const cx = helder.x + helder.w/2;
+    const cy = helder.y + helder.h/2;
+    return { dx: cx - d.x, dy: cy - d.y, dist: Math.hypot(cx-d.x, cy-d.y) };
+  }
+  function isReadyToEnter(){
+    return readCount >= PLAQUES.length;
+  }
+  function canEnterHouse(){
+    if(!isReadyToEnter()) return false;
+    const { dist } = distanceToDoor();
+    return dist < 92; // 👈 zona grande (antes era muito pequena)
+  }
+
+  function enterHouse(){
+    scene = 'inside';
+    closeDialog();
+
+    // posicionar gatinhos dentro (screen-space)
+    carol.x = 240; carol.y = 420; carol.vx=0; carol.vy=0;
+    helder.x = 190; helder.y = 420; helder.vx=0; helder.vy=0;
+    cam.x = 0; cam.y = 0;
+
+    openOverlay('🏡 Dentro de casa',
+`Entrámos.
+
+Aqui dentro é o nosso cantinho — pequeno, real, habitável.
+E eu quero estar ao teu lado a proteger isto contigo:
+o que sustenta a nossa casa, os móveis, a rotina, o descanso,
+o silêncio bom… e sobretudo: tu.
+
+(Se quiseres, podes copiar a carta completa.)\n\n—\n\n` + FULL_LETTER);
+  }
+
+  function updatePlayer(dt){
+    if(scene !== 'outside') return;
+    if(overlayOpen) return;
+
+    const left  = keys.has('arrowleft') || keys.has('a');
+    const right = keys.has('arrowright') || keys.has('d');
+    const jumpDown = pressed.has(' ') || pressed.has('arrowup') || pressed.has('w');
+    const jumpHeld = keys.has(' ') || keys.has('arrowup') || keys.has('w');
+    const readDown = pressed.has('arrowdown') || pressed.has('s') || pressed.has('enter');
+    const enterDown = pressed.has('e');
+
+    if(readDown){
+      const p = nearestPlaque(helder, 48);
+      if(p){
+        if(showDialog && activePlaque && activePlaque.id === p.id) closeDialog();
+        else openDialog(p);
+      }
+    }
+    if(pressed.has('arrowup') && showDialog) closeDialog();
+
+    if(jumpDown) helder.jumpBuf = WORLD.bufferMs;
+    else helder.jumpBuf = Math.max(0, helder.jumpBuf - dt);
+
+    if(helder.onGround) helder.coyote = WORLD.coyoteMs;
+    else helder.coyote = Math.max(0, helder.coyote - dt);
+
+    const accel = helder.onGround ? 0.42 : 0.24;
+    if(left)  { helder.vx -= accel; helder.dir = -1; }
+    if(right) { helder.vx += accel; helder.dir =  1; }
+
+    helder.vx = clamp(helder.vx, -WORLD.maxSpeed, WORLD.maxSpeed);
+    helder.vx *= helder.onGround ? WORLD.groundFriction : WORLD.airFriction;
+
+    const wantJump = (helder.jumpBuf > 0);
+    const canJump = (helder.coyote > 0);
+    if(wantJump && canJump){
+      helder.vy = WORLD.jumpVel;
+      helder.onGround = false;
+      helder.coyote = 0;
+      helder.jumpBuf = 0;
+      helder.jumpHeld = true;
+      beep(740,0.05,'triangle',0.02);
+    }
+
+    if(helder.jumpHeld && !jumpHeld && helder.vy < 0){
+      helder.vy *= WORLD.jumpCut;
+      helder.jumpHeld = false;
+    }
+    if(helder.onGround) helder.jumpHeld = false;
+
+    helder.vy += WORLD.gravity;
+    helder.vy = clamp(helder.vy, -20, WORLD.maxFall);
+
+    resolveEntity(helder);
+
+    // ✅ ENTRAR (muito mais fiável)
+    if(enterDown && canEnterHouse()){
+      beep(988,0.08,'sine',0.02);
+      enterHouse();
+    }
+
+    helder.sparkle = Math.max(0, helder.sparkle - dt*0.02);
+    carol.blush = Math.max(0, carol.blush - dt*0.018);
+  }
+
+  function updateCarol(dt){
+    if(scene !== 'outside') return;
+    if(overlayOpen) return;
+
+    if(showDialog) lead.pause = Math.max(lead.pause, 220);
+
+    const nearPlaque = nearestPlaque(carol, 44);
+    if(nearPlaque && !nearPlaque.read && (nearPlaque.x - carol.x) < 28){
+      lead.pause = Math.max(lead.pause, 420);
+    }
+
+    const gap = (carol.x - helder.x);
+    const desired = gap > 260 ? 0.62 : (gap < 120 ? 0.95 : lead.targetSpeed);
+
+    if(lead.pause > 0){
+      lead.pause -= dt;
+      carol.vx *= 0.84;
+    }else{
+      carol.vx = lerp(carol.vx, desired, 0.08);
+    }
+
+    if(carol.onGround && Math.random()<0.0025 && gap < 170){
+      carol.vy = -7.0;
+      beep(990,0.04,'sine',0.012);
+    }
+
+    carol.vy += WORLD.gravity;
+    carol.vy = clamp(carol.vy, -20, WORLD.maxFall);
+
+    resolveEntity(carol);
+
+    if(carol.x < helder.x + 70) carol.x = helder.x + 70;
+    carol.dir = 1;
+  }
+
+  function updateInside(dt){
+    insideStep += dt;
+    const target = carol.x - 42;
+    helder.x = lerp(helder.x, target, 0.03);
+
+    const bob = Math.sin(insideStep*0.002) * 0.25;
+    carol.y = 420 + bob;
+    helder.y = 420 - bob;
+
+    carol.blush = lerp(carol.blush, 1, 0.01);
+    helder.sparkle = lerp(helder.sparkle, 0.6, 0.01);
+  }
+
+  function pxRect(x,y,w,h,c,a=1){ ctx.globalAlpha=a; ctx.fillStyle=c; ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h)); ctx.globalAlpha=1; }
+  function pxStrokeRect(x,y,w,h,c,a=1){ ctx.globalAlpha=a; ctx.strokeStyle=c; ctx.lineWidth=1; ctx.strokeRect(Math.round(x)+0.5,Math.round(y)+0.5,Math.round(w)-1,Math.round(h)-1); ctx.globalAlpha=1; }
+  function pxCircle(x,y,r,c,a=1){ ctx.globalAlpha=a; ctx.fillStyle=c; ctx.beginPath(); ctx.arc(Math.round(x),Math.round(y),r,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
+
+  function drawSky(t){
+    const g = ctx.createLinearGradient(0,0,0,VH);
+    g.addColorStop(0, '#0b0f1e');
+    g.addColorStop(0.45, '#101a35');
+    g.addColorStop(1, '#070a12');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,VW,VH);
+
+    for(let i=0;i<90;i++){
+      const sx = (i*97.3 + (t*0.02)) % VW;
+      const sy = (i*53.7) % (VH*0.62);
+      const tw = (Math.sin(t*0.004 + i)*0.5+0.5);
+      pxRect(sx, sy, 1, 1, 'rgba(255,255,255,.9)', 0.25 + 0.6*tw);
+    }
+
+    const mx = VW*0.78, my = VH*0.18;
+    pxCircle(mx, my, 26, 'rgba(255,229,138,.22)', 1);
+    pxCircle(mx-6, my-6, 20, 'rgba(255,255,255,.10)', 1);
+    pxCircle(mx-2, my-2, 16, 'rgba(255,229,138,.18)', 1);
+
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = 'rgba(156,255,215,.05)';
+    ctx.beginPath();
+    ctx.moveTo(0, VH*0.22);
+    const off = (cam.x*0.18 + t*0.002);
+    for(let x=0;x<=VW;x+=20){
+      const y = VH*0.22 + Math.sin((x*0.015)+off)*18 + Math.sin((x*0.006)-off*1.2)*10;
+      ctx.lineTo(x,y);
+    }
+    ctx.lineTo(VW,0); ctx.lineTo(0,0); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    drawHills(t, 0.18, '#0e1230', 0.38);
+    drawHills(t, 0.35, '#10183a', 0.52);
+    drawHills(t, 0.60, '#131a3e', 0.68);
+  }
+
+  function drawHills(t, layer, color, yBase){
+    const speed = (0.12 + layer*0.22);
+    const off = (cam.x*layer*0.55 + t*speed*0.02);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, VH*yBase);
+    for(let x=0;x<=VW;x+=22){
+      const y = VH*yBase + Math.sin((x*0.012)+off)*18 + Math.sin((x*0.004)-off*1.2)*10;
+      ctx.lineTo(x,y);
+    }
+    ctx.lineTo(VW,VH); ctx.lineTo(0,VH);
+    ctx.closePath(); ctx.fill();
+  }
+
+  function drawParticles(t){
+    for(const p of particles){
+      p.t += 1;
+      p.x += p.vx;
+      p.y += p.vy + Math.sin((p.t*0.02)+p.seed)*0.06;
+
+      if(p.x < -20) p.x = WORLD.w + 20;
+      if(p.x > WORLD.w + 20) p.x = -20;
+      if(p.y < 20) p.y = 320;
+      if(p.y > 360) p.y = 30;
+
+      const sx = (p.x - cam.x);
+      const sy = (p.y - cam.y);
+      if(sx < -30 || sx > VW+30) continue;
+
+      if(p.kind === 'firefly'){
+        const tw = (Math.sin(p.t*0.04 + p.seed)*0.5+0.5);
+        pxRect(sx, sy, 1, 1, 'rgba(255,229,138,.95)', 0.15 + 0.55*tw);
+        if(tw>0.85) pxRect(sx+1, sy, 1, 1, 'rgba(255,179,217,.9)', 0.20);
+      }else if(p.kind === 'petal'){
+        pxRect(sx, sy, 2, 1, 'rgba(255,179,217,.75)', 0.25);
+      }else{
+        pxRect(sx, sy, 1, 1, 'rgba(156,255,215,.8)', 0.22);
+      }
+    }
+  }
+
+  function drawPlatform(p, t){
+    const x = p.x - cam.x;
+    const y = p.y - cam.y;
+    if(x+p.w < -60 || x > VW+60) return;
+
+    pxRect(x, y, p.w, 6, '#203a3a', 1);
+    for(let i=0;i<p.w;i+=6){
+      const wig = Math.sin((i*0.07)+(t*0.004))*1.5;
+      pxRect(x+i, y-3+wig, 2, 3, 'rgba(156,255,215,.10)', 1);
+      if(Math.random()<0.02) pxRect(x+i+2, y-2+wig, 1, 2, 'rgba(255,179,217,.10)', 1);
+    }
+    pxRect(x, y+6, p.w, p.h-6, '#15192b', 1);
+    pxRect(x, y+6, p.w, 3, 'rgba(255,255,255,.04)', 1);
+    pxRect(x, y+p.h-8, p.w, 8, 'rgba(0,0,0,.22)', 1);
+  }
+
+  function drawDecor(t){
+    for(const d of decor){
+      const x = d.x - cam.x;
+      if(x < -80 || x > VW+80) continue;
+
+      if(d.kind === 'tree'){
+        const s = d.s;
+        const baseY = 520 - cam.y;
+        pxRect(x-2*s, baseY-52*s, 6*s, 54*s, 'rgba(255,229,138,.08)', 1);
+        pxRect(x-1*s, baseY-52*s, 4*s, 54*s, 'rgba(0,0,0,.18)', 1);
+        const sway = Math.sin((t*0.002)+d.seed)*2.4*s;
+        for(let i=0;i<26;i++){
+          const cx = x + sway + Math.sin(i*1.3+d.seed)*6*s*0.12;
+          const cy = baseY - 70*s + (i%6)*6*s;
+          pxRect(cx, cy, 10*s, 6*s, 'rgba(156,255,215,.08)', 1);
+          if(Math.random()<0.03) pxRect(cx+2*s, cy+1*s, 2*s, 2*s, 'rgba(255,179,217,.10)', 1);
+        }
+      }else if(d.kind === 'bush'){
+        const s = d.s;
+        const baseY = 520 - cam.y;
+        for(let i=0;i<12;i++){
+          const bx = x + Math.sin(i*1.2+d.seed)*12*s*0.12;
+          const by = baseY - 18*s + (i%3)*5*s;
+          pxRect(bx, by, 12*s, 8*s, 'rgba(255,179,217,.07)', 1);
+          pxRect(bx+2*s, by+2*s, 8*s, 4*s, 'rgba(156,255,215,.05)', 1);
+        }
+      }else{
+        const s = d.s;
+        const baseY = 520 - cam.y;
+        const bx = x;
+        const by = baseY - 6*s;
+        pxRect(bx, by, 1*s, 6*s, 'rgba(156,255,215,.12)', 1);
+        const blink = (Math.sin(t*0.01 + d.seed)*0.5+0.5);
+        pxRect(bx-2*s, by-2*s, 2*s, 2*s, 'rgba(255,179,217,.12)', 0.3+0.4*blink);
+        pxRect(bx+1*s, by-2*s, 2*s, 2*s, 'rgba(255,229,138,.10)', 0.25+0.4*blink);
+      }
+    }
+  }
+
+  function drawPlaque(pl, t){
+    const x = pl.x - cam.x;
+    const y = pl.y - cam.y;
+    if(x < -50 || x > VW+50) return;
+
+    const near = nearestPlaque(helder, 48);
+    const focus = near && near.id === pl.id;
+    pl.glow = lerp(pl.glow, focus ? 1 : 0, 0.08);
+
+    pxRect(x+11, y-34, 4, 34, 'rgba(255,255,255,.08)', 1);
+    pxRect(x+11, y-10, 4, 10, 'rgba(0,0,0,.18)', 1);
+
+    const boardA = pl.read ? 'rgba(156,255,215,.10)' : 'rgba(255,179,217,.10)';
+    pxRect(x+2, y-46, 22, 14, boardA, 1);
+    pxStrokeRect(x+2, y-46, 22, 14, 'rgba(255,255,255,.10)', 1);
+
+    pxRect(x+6, y-42, 14, 2, 'rgba(255,255,255,.12)', 1);
+    pxRect(x+6, y-39, 10, 2, 'rgba(255,255,255,.08)', 1);
+
+    if(!pl.read){
+      const tw = (Math.sin(t*0.01 + pl.id)*0.5+0.5);
+      pxRect(x+12, y-52, 1, 1, 'rgba(255,229,138,.95)', 0.25 + 0.55*tw + 0.2*pl.glow);
+      pxRect(x+13, y-52, 1, 1, 'rgba(255,179,217,.85)', 0.18 + 0.35*tw*pl.glow);
+    }
+
+    if(pl.glow>0.02){
+      pxRect(x-4, y-52, 34, 26, 'rgba(156,255,215,.03)', 0.35*pl.glow);
+    }
+  }
+
+  // ✅ DESENHAR SÍMBOLO/PORTAL SEMPRE (quando já pode entrar)
+  function drawEnterSymbol(t, doorX, doorY, active){
+    const pulse = 0.35 + 0.45*(Math.sin(t*0.012)*0.5+0.5);
+    const glow = active ? (0.25 + 0.55*pulse) : (0.18 + 0.35*pulse);
+
+    // halo
+    pxRect(doorX-22, doorY-46, 78, 34, 'rgba(255,229,138,.03)', glow);
+    pxRect(doorX-18, doorY-42, 70, 26, 'rgba(156,255,215,.03)', glow);
+
+    // plaque background
+    pxRect(doorX-14, doorY-38, 62, 16, 'rgba(14,16,28,.48)', 1);
+    pxStrokeRect(doorX-14, doorY-38, 62, 16, 'rgba(255,255,255,.10)', 1);
+
+    // pixel "E"
+    pxRect(doorX-6, doorY-34, 10, 2, 'rgba(234,240,255,.50)', 1);
+    pxRect(doorX-6, doorY-31, 8, 2, 'rgba(234,240,255,.36)', 1);
+    pxRect(doorX-6, doorY-28, 10, 2, 'rgba(234,240,255,.50)', 1);
+    pxRect(doorX-6, doorY-34, 2, 8, 'rgba(234,240,255,.50)', 1);
+
+    // pixel "entrar" bars
+    pxRect(doorX+10, doorY-34, 18, 2, 'rgba(234,240,255,.42)', 1);
+    pxRect(doorX+10, doorY-31, 14, 2, 'rgba(234,240,255,.28)', 1);
+    pxRect(doorX+10, doorY-28, 20, 2, 'rgba(234,240,255,.36)', 1);
+
+    // sparkle dot
+    pxRect(doorX+44, doorY-42, 1, 1, 'rgba(255,229,138,.95)', 0.35 + 0.55*pulse);
+
+    // little arrow down to door
+    pxRect(doorX+10, doorY-20, 16, 2, 'rgba(255,179,217,.20)', 1);
+    pxRect(doorX+14, doorY-18, 8, 2, 'rgba(255,179,217,.18)', 1);
+    pxRect(doorX+18, doorY-16, 2, 2, 'rgba(255,179,217,.22)', 1);
+  }
+
+  function drawHouseOutside(t){
+    const x = house.x - cam.x;
+    const y = house.y - cam.y;
+    if(x+house.w < -80 || x > VW+80) return;
+
+    const glow = 0.25 + 0.25*(Math.sin(t*0.006)*0.5+0.5);
+    pxRect(x+66, y-104, 110, 78, 'rgba(255,229,138,.06)', glow);
+
+    pxRect(x+18, y-140, 200, 22, 'rgba(255,179,217,.10)', 1);
+    for(let i=0;i<200;i+=8) pxRect(x+18+i, y-140, 6, 1, 'rgba(255,255,255,.06)', 1);
+
+    pxRect(x+32, y-118, 176, 118, 'rgba(255,255,255,.06)', 1);
+    pxStrokeRect(x+32, y-118, 176, 118, 'rgba(255,255,255,.10)', 1);
+
+    const doorX = x+110, doorY = y-64;
+    pxRect(doorX, doorY, 34, 64, 'rgba(156,255,215,.08)', 1);
+    pxRect(doorX+29, doorY+30, 2, 2, 'rgba(255,229,138,.22)', 1);
+
+    pxRect(x+62, y-92, 26, 22, 'rgba(255,229,138,.10)', 1);
+    pxRect(x+152, y-92, 26, 22, 'rgba(255,229,138,.10)', 1);
+
+    const done = isReadyToEnter();
+    const signC = done ? 'rgba(156,255,215,.14)' : 'rgba(255,179,217,.10)';
+    pxRect(x+88, y-132, 80, 10, signC, 1);
+
+    // ✅ símbolo sempre que "done"
+    if(done){
+      const active = canEnterHouse(); // fica mais forte quando estás perto
+      drawEnterSymbol(t, doorX, doorY, active);
+    }
+  }
+
+  function drawCat(cat, t){
+    const x = cat.x - cam.x;
+    const y = cat.y - cam.y;
+    if(x < -60 || x > VW+60) return;
+
+    cat.step += Math.abs(cat.vx)*0.08 + (cat.onGround ? 0.01 : 0.004);
+    const bob = (scene==='inside') ? Math.sin(t*0.004)*0.6 : (cat.onGround ? Math.sin(cat.step)*1.1 : 0);
+
+    pxRect(x+6, y+cat.h+3, 14, 2, 'rgba(0,0,0,.25)', 1);
+
+    pxRect(x+6, y+6+bob, 14, 10, cat.colorA, 1);
+    pxRect(x+8, y+8+bob, 10, 6, cat.colorB, 0.35);
+
+    pxRect(x+4, y+2+bob, 18, 10, cat.colorA, 1);
+    pxRect(x+5, y+0+bob, 4, 4, cat.colorA, 1);
+    pxRect(x+17, y+0+bob, 4, 4, cat.colorA, 1);
+
+    pxRect(x+6, y+1+bob, 2, 2, 'rgba(255,255,255,.12)', 1);
+    pxRect(x+18, y+1+bob, 2, 2, 'rgba(255,255,255,.12)', 1);
+
+    const eyeY = y+6+bob;
+    const eyeX1 = x + (cat.dir>0 ? 9 : 11);
+    const eyeX2 = x + (cat.dir>0 ? 14 : 16);
+    pxRect(eyeX1, eyeY, 2, 2, 'rgba(0,0,0,.45)', 1);
+    pxRect(eyeX2, eyeY, 2, 2, 'rgba(0,0,0,.45)', 1);
+
+    if(showDialog && cat.name==='Helder'){
+      pxRect(eyeX1+1, eyeY, 1, 1, 'rgba(255,229,138,.55)', 1);
+      pxRect(eyeX2+1, eyeY, 1, 1, 'rgba(255,229,138,.55)', 1);
+    }
+
+    pxRect(x + (cat.dir>0 ? 12 : 14), y+9+bob, 1, 1, 'rgba(255,229,138,.35)', 1);
+
+    const tailX = x + (cat.dir>0 ? 2 : 20);
+    pxRect(tailX, y+8+bob, 4, 2, cat.colorA, 1);
+    pxRect(tailX + (cat.dir>0? -1:1), y+6+bob, 3, 2, cat.colorA, 1);
+
+    if(cat.blush>0.02){
+      const a = 0.12 + 0.22*cat.blush;
+      pxRect(x+7, y+8+bob, 2, 1, 'rgba(255,179,217,.75)', a);
+      pxRect(x+17, y+8+bob, 2, 1, 'rgba(255,179,217,.75)', a);
+    }
+
+    if(cat.name==='Helder'){
+      const tw = (Math.sin(t*0.02)*0.5+0.5);
+      const sA = 0.12 + 0.35*cat.sparkle*tw;
+      pxRect(x+12, y-4+bob, 1, 1, 'rgba(156,255,215,.9)', sA);
+      pxRect(x+13, y-5+bob, 1, 1, 'rgba(255,229,138,.9)', sA*0.8);
+    }
+  }
+
+  function drawVignette(){
+    ctx.globalAlpha = 0.28;
+    ctx.fillStyle = 'rgba(0,0,0,.45)';
+    ctx.fillRect(0,0,VW,14);
+    ctx.fillRect(0,VH-14,VW,14);
+    ctx.fillRect(0,0,14,VH);
+    ctx.fillRect(VW-14,0,14,VH);
+    ctx.globalAlpha = 1;
+  }
+
+  // INSIDE DRAW (mesmo interior)
+  function drawInside(t){
+    const g = ctx.createLinearGradient(0,0,0,VH);
+    g.addColorStop(0, '#121326');
+    g.addColorStop(0.55, '#10101f');
+    g.addColorStop(1, '#0b0b14');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,VW,VH);
+
+    for(let i=0;i<80;i++){
+      const x = (i*37 + Math.sin(t*0.001+i)*10) % VW;
+      const y = (i*19) % (VH*0.78);
+      pxRect(x, y, 1, 1, 'rgba(255,255,255,.08)', 0.12);
+    }
+
+    pxRect(0, VH*0.72, VW, VH*0.28, 'rgba(255,255,255,.05)', 1);
+    for(let x=0;x<VW;x+=10) pxRect(x, VH*0.72, 1, VH*0.28, 'rgba(0,0,0,.16)', 1);
+
+    drawWindow(120, 120, t);
+    drawWindow(VW-240, 120, t);
+    drawFireplace(VW*0.5-70, VH*0.72-92, t);
+    drawSofa(160, VH*0.72-64, t);
+    drawRug(VW*0.5-80, VH*0.72-18, t);
+    drawTable(VW*0.5+70, VH*0.72-42, t);
+    drawPlant(VW*0.5+160, VH*0.72-78, t);
+    drawShelf(VW*0.5-210, 210, t);
+
+    cam.x = 0; cam.y = 0;
+    drawCat(carol, t);
+    drawCat(helder, t);
+  }
+
+  function drawWindow(x,y,t){
+    pxRect(x, y, 120, 88, 'rgba(255,255,255,.06)', 1);
+    pxStrokeRect(x, y, 120, 88, 'rgba(255,255,255,.10)', 1);
+    pxRect(x+4, y+4, 112, 80, 'rgba(12,15,30,.85)', 1);
+    for(let i=0;i<18;i++){
+      const sx = x+8 + (i*13 + (t*0.02))%100;
+      const sy = y+10 + (i*9)%60;
+      pxRect(sx, sy, 1, 1, 'rgba(255,255,255,.9)', 0.25);
+    }
+    pxRect(x+60, y+4, 1, 80, 'rgba(0,0,0,.22)', 1);
+    pxRect(x+4, y+44, 112, 1, 'rgba(0,0,0,.22)', 1);
+  }
+  function drawFireplace(x,y,t){
+    pxRect(x, y, 140, 90, 'rgba(255,255,255,.06)', 1);
+    pxStrokeRect(x, y, 140, 90, 'rgba(255,255,255,.10)', 1);
+    pxRect(x+18, y+24, 104, 54, 'rgba(0,0,0,.25)', 1);
+    const f = 0.4 + 0.6*(Math.sin(t*0.01)*0.5+0.5);
+    pxRect(x+64, y+44, 10, 18, 'rgba(255,179,217,.12)', 1);
+    pxRect(x+62, y+52, 14, 22, 'rgba(255,229,138,.10)', 1);
+    pxRect(x+66, y+54, 6, 14, 'rgba(255,229,138,.18)', f);
+    pxRect(x+68, y+58, 2, 10, 'rgba(255,255,255,.10)', f*0.7);
+    pxRect(x-10, y-10, 160, 120, 'rgba(255,229,138,.02)', 0.35+0.2*f);
+  }
+  function drawSofa(x,y,t){
+    pxRect(x, y, 150, 56, 'rgba(255,179,217,.10)', 1);
+    pxStrokeRect(x, y, 150, 56, 'rgba(255,255,255,.10)', 1);
+    pxRect(x+10, y+10, 130, 18, 'rgba(255,255,255,.06)', 1);
+    pxRect(x+12, y+32, 126, 16, 'rgba(156,255,215,.06)', 1);
+    const bob = Math.sin(t*0.002)*1.2;
+    pxRect(x+26, y+18+bob, 22, 14, 'rgba(255,229,138,.08)', 1);
+    pxStrokeRect(x+26, y+18+bob, 22, 14, 'rgba(255,255,255,.08)', 1);
+  }
+  function drawRug(x,y,t){
+    pxRect(x, y, 160, 16, 'rgba(156,255,215,.06)', 1);
+    for(let i=0;i<160;i+=8){
+      pxRect(x+i, y, 4, 1, 'rgba(255,255,255,.06)', 1);
+      pxRect(x+i, y+15, 4, 1, 'rgba(0,0,0,.18)', 1);
+    }
+  }
+  function drawTable(x,y,t){
+    pxRect(x, y, 56, 24, 'rgba(255,255,255,.06)', 1);
+    pxStrokeRect(x, y, 56, 24, 'rgba(255,255,255,.10)', 1);
+    pxRect(x+8, y+24, 4, 18, 'rgba(0,0,0,.18)', 1);
+    pxRect(x+44, y+24, 4, 18, 'rgba(0,0,0,.18)', 1);
+    pxRect(x+24, y-6, 10, 6, 'rgba(255,229,138,.08)', 1);
+    pxRect(x+26, y-10, 6, 4, 'rgba(255,179,217,.08)', 1);
+  }
+  function drawPlant(x,y,t){
+    pxRect(x, y+26, 22, 16, 'rgba(255,255,255,.05)', 1);
+    pxStrokeRect(x, y+26, 22, 16, 'rgba(255,255,255,.10)', 1);
+    for(let i=0;i<8;i++){
+      const sway = Math.sin(t*0.002 + i)*2;
+      pxRect(x+10+sway, y+10-i*2, 2, 10, 'rgba(156,255,215,.10)', 1);
+    }
+  }
+  function drawShelf(x,y,t){
+    pxRect(x, y, 120, 10, 'rgba(255,255,255,.06)', 1);
+    pxStrokeRect(x, y, 120, 10, 'rgba(255,255,255,.10)', 1);
+    for(let i=0;i<10;i++){
+      pxRect(x+8+i*10, y-18, 6, 18, (i%2? 'rgba(255,179,217,.08)' : 'rgba(156,255,215,.06)'), 1);
+    }
+    pxRect(x+90, y-22, 18, 14, 'rgba(255,229,138,.06)', 1);
+    pxStrokeRect(x+90, y-22, 18, 14, 'rgba(255,255,255,.08)', 1);
+  }
+
+  function drawOutside(t){
+    drawSky(t);
+    drawParticles(t);
+
+    for(const p of platforms) drawPlatform(p, t);
+    drawDecor(t);
+    for(const pl of plaques) drawPlaque(pl, t);
+    drawHouseOutside(t);
+
+    drawCat(carol, t);
+    drawCat(helder, t);
+
+    drawVignette();
+  }
+
+  function updateUI(){
+    if(scene === 'outside'){
+      const pct = clamp((helder.x / (WORLD.w - 240)) * 100, 0, 100);
+      barFill.style.width = pct.toFixed(1) + '%';
+      miniText.textContent = `Placas: ${readCount} / ${PLAQUES.length} • Corações: ${helder.hearts}`;
+    }else{
+      barFill.style.width = '100%';
+      miniText.textContent = `Em casa • Juntos 🐾`;
+    }
+  }
+
+  let last = performance.now();
+  let t = 0;
+
+  function loop(now){
+    const dt = clamp(now - last, 8, 40);
+    last = now;
+    t += dt;
+
+    if(pressed.has('r')) restart();
+
+    if(scene === 'outside'){
+      updatePlayer(dt);
+      updateCarol(dt);
+
+      const targetX = clamp(helder.x - VW*0.42, 0, WORLD.w - VW);
+      cam.x = lerp(cam.x, targetX, 0.08);
+      const targetY = clamp((helder.y - VH*0.62), -40, 120);
+      cam.y = lerp(cam.y, targetY, 0.05);
+
+      drawOutside(t);
+    }else{
+      updateInside(dt);
+      drawInside(t);
+      drawVignette();
+    }
+
+    updateUI();
+    pressed.clear();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  window.addEventListener('touchmove', (e)=>e.preventDefault(), {passive:false});
+})();
+</script>
+</body>
+</html>
